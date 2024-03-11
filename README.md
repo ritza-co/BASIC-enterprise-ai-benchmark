@@ -15,3 +15,11 @@ Benchmarking Enterprise AI
 </h1>
 
 <br/>
+
+**generate_questions.py**: POC to generate some example questions. `python3 generate_questions.py > questions.txt`. You need to add a `.env` file with 
+
+```
+OPENAI_API_KEY=sk...
+```
+
+in the same directory
