@@ -16,6 +16,8 @@ Benchmarking Enterprise AI
 
 <br/>
 
+TODO: this will become the public facing README to let others run the benchmarks themselves. For now it is rough notes used while creating the benchmarks.
+
 **generate_questions.py**: POC to generate some example questions. `python3 generate_questions.py > questions.txt`. You need to add a `.env` file with 
 
 ```
