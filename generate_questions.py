@@ -1,11 +1,11 @@
 import os
 
-from openai import OpenAI
+import openai
 from dotenv import load_dotenv
 
 
 load_dotenv()
-client = OpenAI(api_key=os.getenv("OPEN_AI_TOKEN"))
+client = openai.OpenAI(api_key=os.getenv("OPEN_AI_TOKEN"))
 
 def get_response(system_prompt, user_input):
     messages = [{"role": "system", "content": system_prompt}]
@@ -27,6 +27,9 @@ Please output 50 new questions, not repeating any of the above, one per line. Ma
 response = get_response(system_prompt, user_prompt)
 for q in response.split("\n"):
     print(q)
+
+
+
 
 
 
