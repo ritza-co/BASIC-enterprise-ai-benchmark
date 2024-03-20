@@ -10,4 +10,4 @@ def json_file_to_csv(json_file_path, csv_file_path):
     df.to_csv(csv_file_path, index=False)
     return df
 
-json_file_to_csv("qa_dataset.json","qa_dataset.csv")
+#json_file_to_csv("qa_dataset.json","qa_dataset.csv")
