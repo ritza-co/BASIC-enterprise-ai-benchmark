@@ -25,6 +25,5 @@ def answer_generation(row):
 
 df = pd.read_csv("qa_dataset.csv")
 df["predicted_answers"] = df.apply(answer_generation, axis=1)
-df.to_json("predicted_answers.json")
-df.to_json("predicted_answers.csv")
+df.to_csv("predicted_answers.csv")
 
