@@ -25,3 +25,7 @@ OPENAI_API_KEY=sk...
 ```
 
 in the same directory
+
+#### TODOs:
+
+- dataset_generation needs to be automated.
