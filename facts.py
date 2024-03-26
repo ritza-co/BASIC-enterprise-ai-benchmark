@@ -29,7 +29,7 @@ def get_answer(system_prompt, user_input):
     elif model == "gpt-3.5-turbo-0125":
         cost = (completion.usage.completion_tokens)*0.0000015
     else:
-        NotImplementedError(f"{model} is not currently available")
+        raise NotImplementedError(f"{model} is not currently available")
 
     
     return answer, cost, len(answer), total_time
