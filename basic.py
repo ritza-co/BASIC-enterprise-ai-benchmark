@@ -1,33 +1,63 @@
 from dotenv import load_dotenv
 import pandas as pd
 import time
-import openai
 import os
-
 import json
 
+MODEL = "gpt-4-1106-preview" #OPTIONS: "gpt-4-0125-preview", "gpt-4-1106-preview", "gpt-4", "gpt-3.5-turbo-0125" "claude-3-opus-20240229"
 load_dotenv()
-client = openai.OpenAI(api_key=os.getenv("OPEN_AI_TOKEN"))
 
-MODEL = "gpt-3.5-turbo-0125" #OPTIONS: "gpt-4-0125-preview", "gpt4", "gpt-3.5-turbo-0125"
+if "claude" in MODEL:
+    from anthropic import Anthropic
+    
+    client = Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
+
+elif "gpt" in MODEL:
+    import openai
+
+    client = openai.OpenAI(api_key=os.getenv("OPEN_AI_TOKEN"))
+
+else:
+    raise NotImplementedError(f"{MODEL} is not currently available")
+
 
 def get_answer(system_prompt, user_input):
-    messages = [{"role": "system", "content": system_prompt}]
-    messages.append(
-        {"role": "user", "content": user_input},
-    )
-    model = MODEL
-    start = time.time()
-    completion = client.chat.completions.create(model=model, messages=messages)
-    total_time = time.time() - start
-    answer = completion.choices[0].message.content
 
-    if model == "gpt-4-0125-preview":
+    
+    model=MODEL
+
+    if "claude" in model:
+
+        messages = []
+        messages.append(
+            {"role": "user", "content": user_input},
+        )
+
+        start = time.time()
+        message = client.messages.create(max_tokens=2096, system=system_prompt, messages=messages, model=model)
+        total_time = time.time() - start
+        answer = message.content[0].text
+
+    elif "gpt" in model:
+
+        messages = [{"role": "system", "content": system_prompt}]
+        messages.append(
+            {"role": "user", "content": user_input},
+        )
+
+        start = time.time()
+        completion = client.chat.completions.create(model=model, messages=messages)
+        total_time = time.time() - start
+        answer = completion.choices[0].message.content
+
+    if model == "gpt-4-0125-preview" or model == "gpt-4-1106-preview":
         cost = (completion.usage.completion_tokens)*0.00003
     elif model == "gpt-4":
         cost = (completion.usage.completion_tokens)*0.00006
     elif model == "gpt-3.5-turbo-0125":
         cost = (completion.usage.completion_tokens)*0.0000015
+    elif model == "claude-3-opus-20240229":
+        cost = message.usage.output_tokens*0.000075
     else:
         raise NotImplementedError(f"{model} is not currently available")
 
@@ -35,12 +65,17 @@ def get_answer(system_prompt, user_input):
     return answer, cost, len(answer), total_time
 
 def get_accuracy(system_prompt, user_input):
+
+    import openai
+
+    client_acc = openai.OpenAI(api_key=os.getenv("OPEN_AI_TOKEN"))
+
     messages = [{"role": "system", "content": system_prompt}]
     messages.append(
         {"role": "user", "content": user_input},
     )
     model = "gpt-4-0125-preview"
-    completion = client.chat.completions.create(model=model, messages=messages)
+    completion = client_acc.chat.completions.create(model=model, messages=messages)
     return completion.choices[0].message.content
 
 
