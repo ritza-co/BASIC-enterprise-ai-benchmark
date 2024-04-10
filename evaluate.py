@@ -1,8 +1,11 @@
 import os
 import sys
-from datetime import time
+import time
 import pandas as pd
 import Accuracy
+from dotenv import load_dotenv
+from utils import Debug
+
 
 """TO RUN: python evaluate.py <model>
 
@@ -11,6 +14,7 @@ import Accuracy
 	- gpt-4
 	- gpt-3.5-turbo-0125
 	- claude-3-opus-20240229
+	- Gemini-[Number]
 
 This script will evaluate the performance of the model on the QA dataset and output the results to a CSV file.
 TODO: Add ability to evaluate multiple/all models at once.
@@ -61,6 +65,8 @@ def answer_generation(row):
 
 
 if __name__ == "__main__":
+	load_dotenv()
+
 	available_models = ["gpt-4-0125-preview", "gpt-4-1106-preview", "gpt-4", "gpt-3.5-turbo-0125",
 						"claude-3-opus-20240229"]
 	model = sys.argv[1]
@@ -68,6 +74,8 @@ if __name__ == "__main__":
 
 	if model not in available_models:
 		raise NotImplementedError(f"{model} is not currently available")
+
+	Debug(f"Evaluating model: {model}")
 
 	if "claude" in model:
 		from anthropic import Anthropic
@@ -80,7 +88,16 @@ if __name__ == "__main__":
 		client = openai.OpenAI(api_key=os.getenv("OPEN_AI_TOKEN"))
 
 	if client is not None:
+
+		Debug("Generating answers")
 		df = pd.read_csv("results/qa_dataset.csv")
 		results = df.apply(answer_generation, axis=1, result_type='expand')
 		df[['predicted_answer', 'cost', 'length', 'time taken']] = results
+
+		Debug("Calculating accuracy")
 		df["accuracy"] = df.apply(Accuracy.answer_accuracy, axis=1)
+		df.to_csv(f"results/results_{model}-abd-test.csv")
+		Debug(f"Results saved to results/results_{model}-abd-test.csv")
+
+		print(df.to_csv())
+

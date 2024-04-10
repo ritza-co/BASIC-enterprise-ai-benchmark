@@ -1,4 +1,5 @@
 from datetime import datetime
+
 import pandas as pd
 import json
 
@@ -14,5 +15,5 @@ def json_file_to_csv(json_file_path, csv_file_path):
 
 # json_file_to_csv("qa_dataset.json","qa_dataset.csv")
 def Debug(message):
-	now = datetime.datetime.now()
-	print(f"{now:%H.%M.$S}: {message}")
+	now = datetime.now()
+	print(f"[{now.strftime("%H:%M:%S")}]: {message}")
