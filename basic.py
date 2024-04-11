@@ -24,7 +24,7 @@ from utils import Debug
 
 This script will evaluate the performance of the model/s on the dataset and output the results to a CSV file.
 
-TODO: 1. Automate the final_evals.csv
+TODO: 1. Automate the final_evals.csv (maybe read all results in results that start with BASIC_Eval and combine the averages)
 	  2. More refactoring (move accuracy back to basic.py)
 	  3. Add easier way to test brand new models
 """
@@ -32,9 +32,8 @@ TODO: 1. Automate the final_evals.csv
 available_models = ["gpt-4-0125-preview", "gpt-4-1106-preview", "gpt-4", "gpt-3.5-turbo-0125",
 					"claude-3-opus-20240229"]
 
-
+# NOTE: Add a better way of comparing costs, maybe cost per 100k tokens?
 def calculateModelCost(model, token_usage):
-	cost = 0
 	if model == "gpt-4-0125-preview" or model == "gpt-4-1106-preview":
 		cost = token_usage * 0.00003
 	elif model == "gpt-4":
@@ -117,11 +116,13 @@ def evaluate_model(target_model):
 if __name__ == "__main__":
 	load_dotenv()
 
-	if len(sys.argv) < 1:
+	if len(sys.argv) < 2:
 		Debug("Evaluating all available models")
 		print("=" * 10)
 		for model in available_models:
+			# NOTE: could add a check here to see if the model has already been evaluated
 			evaluate_model(model)
+			print("=" * 10)
 		Debug("Evaluation complete")
 	elif sys.argv[1] in available_models:
 		evaluate_model(sys.argv[1])
