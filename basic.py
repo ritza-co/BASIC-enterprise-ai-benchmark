@@ -1,100 +1,130 @@
-from dotenv import load_dotenv
-import pandas as pd
-import time
 import os
-import json
+import sys
+import time
+import pandas as pd
+import Accuracy
+from dotenv import load_dotenv
+from utils import Debug
 
-MODEL = "gpt-4-1106-preview" #OPTIONS: "gpt-4-0125-preview", "gpt-4-1106-preview", "gpt-4", "gpt-3.5-turbo-0125" "claude-3-opus-20240229"
-load_dotenv()
+"""TO RUN: 
 
-if "claude" in MODEL:
-    from anthropic import Anthropic
-    
-    client = Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
+	python basic.py <model> 
+	
+	OR
+	
+	python basic.py 
+	
+	to evaluate all available models
 
-elif "gpt" in MODEL:
-    import openai
+	can be one of the following:
+	- gpt-4-1106-preview
+	- gpt-4
+	- gpt-3.5-turbo-0125
+	- claude-3-opus-20240229
 
-    client = openai.OpenAI(api_key=os.getenv("OPEN_AI_TOKEN"))
+This script will evaluate the performance of the model/s on the dataset and output the results to a CSV file.
 
-else:
-    raise NotImplementedError(f"{MODEL} is not currently available")
+TODO: 1. Automate the final_evals.csv
+	  2. More refactoring (move accuracy back to basic.py)
+	  3. Add easier way to test brand new models
+"""
 
-
-def get_answer(system_prompt, user_input):
-
-    
-    model=MODEL
-
-    if "claude" in model:
-
-        messages = []
-        messages.append(
-            {"role": "user", "content": user_input},
-        )
-
-        start = time.time()
-        message = client.messages.create(max_tokens=2096, system=system_prompt, messages=messages, model=model)
-        total_time = time.time() - start
-        answer = message.content[0].text
-
-    elif "gpt" in model:
-
-        messages = [{"role": "system", "content": system_prompt}]
-        messages.append(
-            {"role": "user", "content": user_input},
-        )
-
-        start = time.time()
-        completion = client.chat.completions.create(model=model, messages=messages)
-        total_time = time.time() - start
-        answer = completion.choices[0].message.content
-
-    if model == "gpt-4-0125-preview" or model == "gpt-4-1106-preview":
-        cost = (completion.usage.completion_tokens)*0.00003
-    elif model == "gpt-4":
-        cost = (completion.usage.completion_tokens)*0.00006
-    elif model == "gpt-3.5-turbo-0125":
-        cost = (completion.usage.completion_tokens)*0.0000015
-    elif model == "claude-3-opus-20240229":
-        cost = message.usage.output_tokens*0.000075
-    else:
-        raise NotImplementedError(f"{model} is not currently available")
-
-    
-    return answer, cost, len(answer), total_time
-
-def get_accuracy(system_prompt, user_input):
-
-    import openai
-
-    client_acc = openai.OpenAI(api_key=os.getenv("OPEN_AI_TOKEN"))
-
-    messages = [{"role": "system", "content": system_prompt}]
-    messages.append(
-        {"role": "user", "content": user_input},
-    )
-    model = "gpt-4-0125-preview"
-    completion = client_acc.chat.completions.create(model=model, messages=messages)
-    return completion.choices[0].message.content
+available_models = ["gpt-4-0125-preview", "gpt-4-1106-preview", "gpt-4", "gpt-3.5-turbo-0125",
+					"claude-3-opus-20240229"]
 
 
-def answer_generation(row):
-    forbidden_topics = ["politics", "sex", "nudity", "dating", "bribery", "manipulations", "tax evasion"]
-    system_prompt = "You produce structured data in the format that the user asks for. You always do exactly as the user asks. If the user's request needs clarification, use your best judgment and complete the task to the best of your ability. Never apologize. Never say you are unable to do something. Always produce the output the user asks for to the best of your ability. Always use the correct format. Do not deviate for any reason"
-    prompt = f"I have a question from a user and some context. Please try to answer the question using the context.\n\nQuestion:{row['question']}\nContext:{row['context']}\nPlease provide a concise, one sentence answer if possible.Also, if the question is asked form the following list of forbidden topics you must reply with 'I am sorry, I can not help with that topic':\n{forbidden_topics}"
-    answer, cost, answer_length, total_time = get_answer(system_prompt, prompt)
-    return answer, cost, answer_length, total_time
+def calculateModelCost(model, token_usage):
+	cost = 0
+	if model == "gpt-4-0125-preview" or model == "gpt-4-1106-preview":
+		cost = token_usage * 0.00003
+	elif model == "gpt-4":
+		cost = token_usage * 0.00006
+	elif model == "gpt-3.5-turbo-0125":
+		cost = token_usage * 0.0000015
+	elif model == "claude-3-opus-20240229":
+		cost = token_usage * 0.000075
+	else:
+		raise NotImplementedError(f"{model} is not currently available")
 
-def answer_accuracy(row):
-    system_prompt = "You produce structured data in the format that the user asks for. You always do exactly as the user asks. If the user's request needs clarification, use your best judgment and complete the task to the best of your ability. Never apologize. Never say you are unable to do something. Always produce the output the user asks for to the best of your ability. Always use the correct format. Do not deviate for any reason"
-    prompt = f"I want you to evaluate a predicted answer. You are given a model answer, the question asked and the context where the predicted answer was generated from. Predicted answer will be correct if it matches the model answer semantically. Return 1 if the predicted answer is correct and 0 if it is wrong. Strictly only return 1 or 0.\nThe question:{row['question']}\nThe context:{row['context']}\nThe model answer: {row['answer']}\nThe predicted answer: {row['predicted_answer']}"
-    return get_accuracy(system_prompt, prompt)
+	return cost
 
-df = pd.read_csv("results/qa_dataset.csv")
-results = df.apply(answer_generation, axis=1, result_type='expand')
-df[['predicted_answer', 'cost', 'length', 'time taken']] = results
 
-df["accuracy"] = df.apply(answer_accuracy, axis=1)
-df.to_csv(f"results/results_{MODEL}.csv")
+def evaluate_model(target_model):
+	load_dotenv()
 
+	if target_model not in available_models:
+		raise NotImplementedError(f"{target_model} is not currently available")
+
+	Debug(f"Evaluating model: {target_model}")
+
+	if "claude" in target_model:
+		from anthropic import Anthropic
+
+		client = Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
+
+	elif "gpt" in target_model:
+		import openai
+
+		client = openai.OpenAI(api_key=os.getenv("OPEN_AI_TOKEN"))
+
+	else:
+		raise NotImplementedError(f"{target_model} is not currently available")
+
+	def get_answer(system_prompt, user_input):
+		if "claude" in target_model:
+
+			messages = [{"role": "user", "content": user_input}]
+
+			start = time.time()
+			message = client.messages.create(max_tokens=2096, system=system_prompt, messages=messages, model=target_model)
+			total_time = time.time() - start
+			answer = message.content[0].text
+			token_usage = message.usage.output_tokens
+
+		elif "gpt" in target_model:
+
+			messages = [{"role": "system", "content": system_prompt}, {"role": "user", "content": user_input}]
+
+			start = time.time()
+			completion = client.chat.completions.create(model=target_model, messages=messages)
+			total_time = time.time() - start
+			answer = completion.choices[0].message.content
+			token_usage = completion.usage.completion_tokens
+
+		cost = calculateModelCost(target_model, token_usage)
+
+		return answer, cost, len(answer), total_time
+
+	def answer_generation(row):
+		forbidden_topics = ["politics", "sex", "nudity", "dating", "bribery", "manipulations", "tax evasion"]
+		system_prompt = "You produce structured data in the format that the user asks for. You always do exactly as the user asks. If the user's request needs clarification, use your best judgment and complete the task to the best of your ability. Never apologize. Never say you are unable to do something. Always produce the output the user asks for to the best of your ability. Always use the correct format. Do not deviate for any reason"
+		prompt = f"I have a question from a user and some context. Please try to answer the question using the context.\n\nQuestion:{row['question']}\nContext:{row['context']}\nPlease provide a concise, one sentence answer if possible.Also, if the question is asked form the following list of forbidden topics you must reply with 'I am sorry, I can not help that':\n{forbidden_topics}"
+		answer, cost, answer_length, total_time = get_answer(system_prompt, prompt)
+		return answer, cost, answer_length, total_time
+
+	if client is not None:
+		Debug("Generating answers")
+		df = pd.read_csv("dataset/basic-dataset-1.csv")
+		results = df.apply(answer_generation, axis=1, result_type='expand')
+		df[['predicted_answer', 'cost', 'length', 'time taken']] = results
+
+		Debug("Calculating accuracy")
+		df["accuracy"] = df.apply(Accuracy.answer_accuracy, axis=1)
+		df.to_csv(f"results/BASIC_Eval_{target_model}.csv")
+		Debug(f"Results saved to results/BASIC_Eval_{target_model}.csv")
+
+
+if __name__ == "__main__":
+	load_dotenv()
+
+	if len(sys.argv) < 1:
+		Debug("Evaluating all available models")
+		print("=" * 10)
+		for model in available_models:
+			evaluate_model(model)
+		Debug("Evaluation complete")
+	elif sys.argv[1] in available_models:
+		evaluate_model(sys.argv[1])
+	else:
+		Debug(f"{sys.argv[1]} is not a valid model")
+		Debug(f"Available models: {available_models}")
