@@ -4,6 +4,8 @@ import time
 import pandas as pd
 import Accuracy
 from dotenv import load_dotenv
+
+from final_evaluation import final_evaluation
 from utils import Debug
 
 """TO RUN: 
@@ -29,8 +31,8 @@ TODO: 1. Automate the final_evals.csv (maybe read all results in results that st
 	  3. Add easier way to test brand new models
 """
 
-available_models = ["gpt-4-0125-preview", "gpt-4-1106-preview", "gpt-4", "gpt-3.5-turbo-0125",
-					"claude-3-opus-20240229"]
+available_models = ["gpt-4", "claude-3-opus-20240229"]
+
 
 # NOTE: Add a better way of comparing costs, maybe cost per 100k tokens?
 def calculateModelCost(model, token_usage):
@@ -75,7 +77,8 @@ def evaluate_model(target_model):
 			messages = [{"role": "user", "content": user_input}]
 
 			start = time.time()
-			message = client.messages.create(max_tokens=2096, system=system_prompt, messages=messages, model=target_model)
+			message = client.messages.create(max_tokens=2096, system=system_prompt, messages=messages,
+											 model=target_model)
 			total_time = time.time() - start
 			answer = message.content[0].text
 			token_usage = message.usage.output_tokens
@@ -129,3 +132,5 @@ if __name__ == "__main__":
 	else:
 		Debug(f"{sys.argv[1]} is not a valid model")
 		Debug(f"Available models: {available_models}")
+
+	Debug(final_evaluation())
