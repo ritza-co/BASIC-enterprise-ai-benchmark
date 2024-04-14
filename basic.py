@@ -4,7 +4,6 @@ import time
 import pandas as pd
 import Accuracy
 from dotenv import load_dotenv
-
 from final_evaluation import final_evaluation
 from utils import Debug
 
@@ -23,6 +22,7 @@ from utils import Debug
 	- gpt-4
 	- gpt-3.5-turbo-0125
 	- claude-3-opus-20240229
+	- gemini-1.0-pro
 
 This script will evaluate the performance of the model/s on the dataset and output the results to a CSV file.
 
@@ -31,7 +31,7 @@ TODO: 1. Automate the final_evals.csv (maybe read all results in results that st
 	  3. Add easier way to test brand new models
 """
 
-available_models = ["gpt-4", "claude-3-opus-20240229"]
+available_models = ["gpt-4", "claude-3-opus-20240229", "gpt-4-1106-preview", "gpt-3.5-turbo-0125", "gemini-1.0-pro"]
 
 
 # NOTE: Add a better way of comparing costs, maybe cost per 100k tokens?
@@ -44,6 +44,8 @@ def calculateModelCost(model, token_usage):
 		cost = token_usage * 0.0000015
 	elif model == "claude-3-opus-20240229":
 		cost = token_usage * 0.000075
+	elif model == "gemini-1.0-pro":
+		cost = token_usage * 0.0000015
 	else:
 		raise NotImplementedError(f"{model} is not currently available")
 
@@ -67,14 +69,18 @@ def evaluate_model(target_model):
 		import openai
 
 		client = openai.OpenAI(api_key=os.getenv("OPEN_AI_TOKEN"))
+	elif "gemini" in target_model:
+		import google.generativeai as genai
 
+		client = genai.GenerativeModel(model_name="gemini-1.0-pro")
 	else:
 		raise NotImplementedError(f"{target_model} is not currently available")
 
 	def get_answer(system_prompt, user_input):
+		token_usage = 0
 		if "claude" in target_model:
 
-			messages = [{"role": "user", "content": user_input}]
+			messages = [{"role": "system", "content": system_prompt}, {"role": "user", "content": user_input}]
 
 			start = time.time()
 			message = client.messages.create(max_tokens=2096, system=system_prompt, messages=messages,
@@ -92,6 +98,16 @@ def evaluate_model(target_model):
 			total_time = time.time() - start
 			answer = completion.choices[0].message.content
 			token_usage = completion.usage.completion_tokens
+
+		elif "gemini" in target_model:
+
+			messages = f"{system_prompt}\n\n{user_input}"
+
+			start = time.time()
+			completion = client.start_chat(history=[])
+			answer = completion.send_message(messages).text
+			total_time = time.time() - start
+			token_usage = client.count_tokens(completion.history)
 
 		cost = calculateModelCost(target_model, token_usage)
 
@@ -112,8 +128,8 @@ def evaluate_model(target_model):
 
 		Debug("Calculating accuracy")
 		df["accuracy"] = df.apply(Accuracy.answer_accuracy, axis=1)
-		df.to_csv(f"results/BASIC_Eval_{target_model}.csv")
-		Debug(f"Results saved to results/BASIC_Eval_{target_model}.csv")
+		df.to_csv(f"results/results_{target_model}.csv")
+		Debug(f"Results saved to results/results{target_model}.csv")
 
 
 if __name__ == "__main__":
