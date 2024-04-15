@@ -31,7 +31,7 @@ TODO: 1. Automate the final_evals.csv (maybe read all results in results that st
 	  3. Add easier way to test brand new models
 """
 
-available_models = ["gpt-4", "claude-3-opus-20240229", "gpt-4-1106-preview", "gpt-3.5-turbo-0125"]
+available_models = ["claude-3-opus-20240229", "gpt-4-1106-preview", "gpt-3.5-turbo-0125"]
 
 
 # NOTE: Add a better way of comparing costs, maybe cost per 100k tokens?
