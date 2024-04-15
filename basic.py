@@ -31,7 +31,7 @@ TODO: 1. Automate the final_evals.csv (maybe read all results in results that st
 	  3. Add easier way to test brand new models
 """
 
-available_models = ["gpt-4", "claude-3-opus-20240229", "gpt-4-1106-preview", "gpt-3.5-turbo-0125", "gemini-1.0-pro"]
+available_models = ["gpt-4", "claude-3-opus-20240229", "gpt-4-1106-preview", "gpt-3.5-turbo-0125"]
 
 
 # NOTE: Add a better way of comparing costs, maybe cost per 100k tokens?
@@ -80,7 +80,7 @@ def evaluate_model(target_model):
 		token_usage = 0
 		if "claude" in target_model:
 
-			messages = [{"role": "system", "content": system_prompt}, {"role": "user", "content": user_input}]
+			messages = [{"role": "user", "content": user_input}]
 
 			start = time.time()
 			message = client.messages.create(max_tokens=2096, system=system_prompt, messages=messages,
