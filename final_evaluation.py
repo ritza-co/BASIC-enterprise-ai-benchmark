@@ -10,7 +10,7 @@ from utils import Debug
 def final_evaluation():
     directory = "results"
 
-    files = [f for f in os.listdir(directory) if f.startswith("BASIC_Eval") and f.endswith(".csv")]
+    files = [f for f in os.listdir(directory) if f.startswith("results_") and f.endswith(".csv")]
 
     combined_df = pd.DataFrame()
 
@@ -20,7 +20,7 @@ def final_evaluation():
 
         temp_data = temp_data[['cost', 'length', 'time taken', 'accuracy']].copy()
 
-        model_name = file.replace("BASIC_Eval_", "").replace(".csv", "")
+        model_name = file.replace("results_", "").replace(".csv", "")
         temp_data['Model'] = model_name
 
         temp_data.rename(columns={'time taken': 'speed'}, inplace=True)
@@ -95,4 +95,4 @@ def evaluate_appropriateness(file_path):
 
 
 if __name__ == "__main__": #test
-    evaluate_appropriateness('results/results_claude-3-opus-20240229.csv')
+    final_evaluation()
