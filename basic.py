@@ -2,9 +2,7 @@ import os
 import sys
 import time
 import pandas as pd
-import Accuracy
 from dotenv import load_dotenv
-from final_evaluation import final_evaluation
 from utils import Debug
 
 """TO RUN: 
@@ -32,6 +30,23 @@ TODO: 1. Automate the final_evals.csv (maybe read all results in results that st
 """
 
 available_models = ["claude-3-opus-20240229", "gpt-4-1106-preview", "gpt-3.5-turbo-0125", "gpt-4"]
+
+
+def answer_accuracy(row):
+	system_prompt = "You produce structured data in the format that the user asks for. You always do exactly as the user asks. If the user's request needs clarification, use your best judgment and complete the task to the best of your ability. Never apologize. Never say you are unable to do something. Always produce the output the user asks for to the best of your ability. Always use the correct format. Do not deviate for any reason"
+	prompt = f"I want you to evaluate a predicted answer. You are given a model answer, the question asked and the context where the predicted answer was generated from. Predicted answer will be correct if it matches the model answer semantically. Return 1 if the predicted answer is correct and 0 if it is wrong. Strictly only return 1 or 0.\nThe question:{row['question']}\nThe context:{row['context']}\nThe model answer: {row['answer']}\nThe predicted answer: {row['predicted_answer']}"
+	return get_accuracy(system_prompt, prompt)
+
+
+def get_accuracy(system_prompt, user_input):
+	import openai
+
+	client_acc = openai.OpenAI(api_key=os.getenv("OPEN_AI_TOKEN"))
+
+	messages = [{"role": "system", "content": system_prompt}, {"role": "user", "content": user_input}]
+	model = "gpt-4-0125-preview"
+	completion = client_acc.chat.completions.create(model=model, messages=messages)
+	return completion.choices[0].message.content
 
 
 # NOTE: Add a better way of comparing costs, maybe cost per 100k tokens?
@@ -130,6 +145,49 @@ def evaluate_model(target_model):
 		df["accuracy"] = df.apply(Accuracy.answer_accuracy, axis=1)
 		df.to_csv(f"results/results_{target_model}.csv")
 		Debug(f"Results saved to results/results{target_model}.csv")
+
+
+def final_evaluation():
+	directory = "results"
+
+	files = [f for f in os.listdir(directory) if f.startswith("results_") and f.endswith(".csv")]
+
+	combined_df = pd.DataFrame()
+
+	for file in files:
+		file_path = os.path.join(directory, file)
+		temp_data = pd.read_csv(file_path)
+
+		temp_data = temp_data[['cost', 'length', 'time taken', 'accuracy']].copy()
+
+		model_name = file.replace("results_", "").replace(".csv", "")
+		temp_data['Model'] = model_name
+
+		temp_data.rename(columns={'time taken': 'speed'}, inplace=True)
+
+		combined_df = pd.concat([combined_df, temp_data], ignore_index=True)
+
+	average_df = combined_df.groupby('Model').agg({
+		'speed': 'mean',
+		'accuracy': 'mean',
+		'cost': 'mean',
+		'length': 'mean'
+	}).reset_index()
+
+	average_df['speed'] = average_df['speed'].round(3)
+	average_df['accuracy'] = average_df['accuracy'].round(2) * 100
+	average_df['length'] = average_df['length'].round(2)
+	# maybe change to cost per 100k prompts?
+
+	if 'appropriateness' in combined_df.columns:
+		average_df['appropriateness'] = combined_df.groupby('Model')['appropriateness'].mean().round(2).values
+	else:
+		average_df['appropriateness'] = pd.NA
+
+	average_csv_path = os.path.join(directory, 'Final_BASIC_Rankings.csv')
+	average_df.to_csv(average_csv_path, index=False)
+
+	print(f"{average_csv_path} updated")
 
 
 if __name__ == "__main__":
