@@ -24,12 +24,10 @@ from utils import Debug
     
     To run with a different dataset, place the dataset in the dataset folder and run the following command:
     
-    python basic.py <model> dataset/{name_of_dataset}.csv
+    python basic.py <model> {name_of_dataset}
 
 This script will evaluate the performance of the model/s on the dataset and output the results to a CSV file.
 
-TODO: 1. Automate the final_evals.csv (maybe read all results in results that start with BASIC_Eval and combine the averages)
-      2. Add easier way to test brand new models
 """
 
 available_models = ["claude-3-opus-20240229", "gpt-4-1106-preview", "gpt-3.5-turbo-0125", "gpt-4"]
@@ -197,20 +195,20 @@ if __name__ == "__main__":
 	load_dotenv()
 
 	# default dataset
-	dataset_path = "dataset/basic-dataset-1.csv"
+	dataset_path = "basic-dataset-1"
 
 	# if a model is provided as an argument
 	if len(sys.argv) > 1:
 		if sys.argv[1] in available_models:
 			model_name = sys.argv[1]
 			if len(sys.argv) > 2:  # if a dataset is provided as an argument
-				dataset_path = sys.argv[2]
+				dataset_path = "dataset/" + sys.argv[2] + ".csv"
 				if not os.path.exists(dataset_path):
 					raise FileNotFoundError(f"{dataset_path} not found")
 				Debug(f"Evaluating model: {model_name} with dataset: {dataset_path}")
 			evaluate_model(model_name, dataset_path)
 		else:
-			dataset_path = sys.argv[1]  # if a dataset is provided as an argument but no model
+			dataset_path = "dataset/" + sys.argv[1] + ".csv"  # if a dataset is provided as an argument but no model
 			if not os.path.exists(dataset_path):
 				raise FileNotFoundError(f"{dataset_path} not found")
 			Debug("Evaluating all available models with dataset: " + dataset_path)
@@ -223,6 +221,7 @@ if __name__ == "__main__":
 		Debug("Evaluating all available models")  # if no arguments are provided, just evaluate all available models
 		print("=" * 10)
 		for model in available_models:
+			dataset_path = "dataset/" + dataset_path + ".csv"
 			evaluate_model(model, dataset_path)
 			print("=" * 10)
 		Debug("Evaluation complete")
