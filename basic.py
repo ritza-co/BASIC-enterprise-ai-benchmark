@@ -7,26 +7,27 @@ from utils import Debug
 
 """TO RUN: 
 
-	python basic.py <model> 
-	
-	OR
-	
-	python basic.py 
-	
-	to evaluate all available models
+    python basic.py <model> 
+    
+    OR
+    
+    python basic.py 
+    
+    to evaluate all available models
 
-	can be one of the following:
-	- gpt-4-1106-preview
-	- gpt-4
-	- gpt-3.5-turbo-0125
-	- claude-3-opus-20240229
-	- gemini-1.0-pro
+    can be one of the following:
+    - gpt-4-1106-preview
+    - gpt-4
+    - gpt-3.5-turbo-0125
+    - claude-3-opus-20240229
+    - gemini-1.0-pro
+    
+    To run with a different dataset, place the dataset in the dataset folder and run the following command:
+    
+    python basic.py <model> {name_of_dataset}
 
 This script will evaluate the performance of the model/s on the dataset and output the results to a CSV file.
 
-TODO: 1. Automate the final_evals.csv (maybe read all results in results that start with BASIC_Eval and combine the averages)
-	  2. More refactoring (move accuracy back to basic.py)
-	  3. Add easier way to test brand new models
 """
 
 available_models = ["claude-3-opus-20240229", "gpt-4-1106-preview", "gpt-3.5-turbo-0125", "gpt-4"]
@@ -67,7 +68,7 @@ def calculateModelCost(model, token_usage):
 	return cost
 
 
-def evaluate_model(target_model):
+def evaluate_model(target_model, dataset_path="dataset/basic-dataset-1.csv"):
 	load_dotenv()
 
 	if target_model not in available_models:
@@ -137,12 +138,12 @@ def evaluate_model(target_model):
 
 	if client is not None:
 		Debug("Generating answers")
-		df = pd.read_csv("dataset/basic-dataset-1.csv")
+		df = pd.read_csv(dataset_path)
 		results = df.apply(answer_generation, axis=1, result_type='expand')
 		df[['predicted_answer', 'cost', 'length', 'time taken']] = results
 
 		Debug("Calculating accuracy")
-		df["accuracy"] = df.apply(Accuracy.answer_accuracy, axis=1)
+		df["accuracy"] = df.apply(answer_accuracy, axis=1)
 		df.to_csv(f"results/results_{target_model}.csv")
 		Debug(f"Results saved to results/results{target_model}.csv")
 
@@ -193,18 +194,38 @@ def final_evaluation():
 if __name__ == "__main__":
 	load_dotenv()
 
-	if len(sys.argv) < 2:
-		Debug("Evaluating all available models")
+	# default dataset
+	dataset_path = "basic-dataset-1"
+
+	# if a model is provided as an argument
+	if len(sys.argv) > 1:
+		if sys.argv[1] in available_models:
+			model_name = sys.argv[1]
+			if len(sys.argv) > 2:  # if a dataset is provided as an argument
+				dataset_path = "dataset/" + sys.argv[2] + ".csv"
+				if not os.path.exists(dataset_path):
+					raise FileNotFoundError(f"{dataset_path} not found")
+				Debug(f"Evaluating model: {model_name} with dataset: {dataset_path}")
+			evaluate_model(model_name, dataset_path)
+		else:
+			dataset_path = "dataset/" + sys.argv[1] + ".csv"  # if a dataset is provided as an argument but no model
+			if not os.path.exists(dataset_path):
+				raise FileNotFoundError(f"{dataset_path} not found")
+			Debug("Evaluating all available models with dataset: " + dataset_path)
+			print("=" * 10)
+			for model in available_models:
+				evaluate_model(model, dataset_path)
+				print("=" * 10)
+			Debug("Evaluation complete")
+	else:
+		Debug("Evaluating all available models")  # if no arguments are provided, just evaluate all available models
 		print("=" * 10)
 		for model in available_models:
-			# NOTE: could add a check here to see if the model has already been evaluated
-			evaluate_model(model)
+			dataset_path = "dataset/" + dataset_path + ".csv"
+			evaluate_model(model, dataset_path)
 			print("=" * 10)
 		Debug("Evaluation complete")
-	elif sys.argv[1] in available_models:
-		evaluate_model(sys.argv[1])
-	else:
-		Debug(f"{sys.argv[1]} is not a valid model")
-		Debug(f"Available models: {available_models}")
 
 	Debug(final_evaluation())
+
+

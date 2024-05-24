@@ -59,6 +59,24 @@ If you want to evaluate all available models, you can run the project using the 
 python basic.py
 ```
 
+
+### Running using custom datasets
+
+You can run the benchmark using your own datasets by adding the dataset to the `dataset` folder. The dataset should 
+be in a `.csv` file with each line containing a ```question```, ```answer``` and ```context``` in that order. You can then 
+run the benchmark with your dataset using the following command:
+
+```bash
+python basic.py <dataset_name>
+```
+
+or to run the benchmark with a specific model and dataset:
+
+```bash
+python basic.py <model> <dataset_name>
+```
+
+
 ### Adding new models
 
 To add a new model, you can add the model to the `available_models` array in the `basic.py` file. The key should be the model name.
@@ -83,3 +101,6 @@ def calculateModelCost(model, token_usage):
 		cost = token_usage * <new_price>
 
 ```
+
+
+
