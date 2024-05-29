@@ -20,7 +20,11 @@ Benchmarking Enterprise AI
 
 ## Getting Started
 
-These instructions will get you a copy of the [BASIC](www.basicarticlegoeshere.com) benchmarking tool up and running on your local machine for evaluation purposes.
+These instructions will get you a copy of the [BASIC](https://www.enterprisebot.ai/blog/back-to-basics-a-generative-ai-benchmark-for-enterprise) benchmarking tool up and running on your local 
+machine for evaluation purposes. 
+
+### How it works
+For more information on how the benchmarking tool works, refer to the [documentation page](Docmentation.md)
 
 ### Installing
 
@@ -101,6 +105,7 @@ def calculateModelCost(model, token_usage):
 		cost = token_usage * <new_price>
 
 ```
+
 
 
 
