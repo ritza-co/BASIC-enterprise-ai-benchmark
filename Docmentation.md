@@ -24,9 +24,11 @@ This documentation provides an overview of the benchmarking tool and how differe
 
 The structure of the benchmarking tool is as follows:
 
-
-![img.png](img.png)
-
+<p align="center">
+  <a href="https://enterprisebot.ai/">
+    <img alt="Enterprise Bot" title="Enterprise Bot" src="./img.png" width="500">
+  </a>
+</p>
 
 #### 1. Dataset Generation 
 - **Prompts**: This is the initial stage where prompts are defined. These prompts are used to generate questions and corresponding answers with context.
