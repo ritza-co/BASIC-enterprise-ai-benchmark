@@ -102,5 +102,7 @@ def calculateModelCost(model, token_usage):
 
 ```
 
+### Results 
 
+Results are added to the `/results` folder. You can view our results in the [`/001-llm-benchmark-results`](https://github.com/ritza-co/BASIC-enterprise-ai-benchmark/blob/add-chatbot-results/results/001-llm-benchmark-results/Final_BASIC_Rankings.csv) folder.
 
