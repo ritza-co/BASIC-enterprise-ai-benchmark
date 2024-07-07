@@ -23,6 +23,8 @@ from utils import Debug
     - claude-3-5-sonnet-20240620
     - gemini-1.5-pro
     - gemini-1.5-flash
+    
+
 
 This script will evaluate the performance of the model/s on the dataset and output the results to a CSV file.
 
@@ -30,7 +32,7 @@ TODO: 1. Automate the final_evals.csv (maybe read all results in results that st
 """
 
 available_models = ["claude-3-opus-20240229", "gpt-3.5-turbo-0125", "gpt-4",
-					"claude-3-5-sonnet-20240620", "gemini-1.0-pro", "gemini-1.5-pro", "gemini-1.5-flash", "gpt-4o"]
+                    "claude-3-5-sonnet-20240620", "gemini-1.0-pro", "gemini-1.5-pro", "gemini-1.5-flash", "gpt-4o"]
 
 
 def answer_accuracy(row):
@@ -80,6 +82,7 @@ def evaluate_model(target_model):
     Debug(f"Evaluating model: {target_model}")
 
     if "claude" in target_model:
+
         from anthropic import Anthropic
 
         client = Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
@@ -201,9 +204,9 @@ if __name__ == "__main__":
         Debug("Evaluating all available models")
         print("=" * 10)
         for model in available_models:
-            # NOTE: could add a check here to see if the model has already been evaluated
-            evaluate_model(model)
-            print("=" * 10)
+            if not os.path.exists(f"results/results_{model}.csv"):
+                evaluate_model(model)
+                print("=" * 10)
         Debug("Evaluation complete")
     elif sys.argv[1] in available_models:
         evaluate_model(sys.argv[1])
