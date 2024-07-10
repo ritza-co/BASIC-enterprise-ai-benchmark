@@ -32,7 +32,7 @@ TODO: 1. Automate the final_evals.csv (maybe read all results in results that st
 """
 
 available_models = ["claude-3-opus-20240229", "gpt-3.5-turbo-0125", "gpt-4",
-                    "claude-3-5-sonnet-20240620", "gemini-1.0-pro", "gemini-1.5-pro", "gemini-1.5-flash", "gpt-4o"]
+                    "claude-3-5-sonnet-20240620", "gpt-4o"]
 
 
 def answer_accuracy(row):
@@ -47,7 +47,7 @@ def get_accuracy(system_prompt, user_input):
     client_acc = openai.OpenAI(api_key=os.getenv("OPEN_AI_TOKEN"))
 
     messages = [{"role": "system", "content": system_prompt}, {"role": "user", "content": user_input}]
-    model = "gpt-4o"
+    model = "gpt-4"
     completion = client_acc.chat.completions.create(model=model, messages=messages)
     return completion.choices[0].message.content
 
@@ -204,9 +204,8 @@ if __name__ == "__main__":
         Debug("Evaluating all available models")
         print("=" * 10)
         for model in available_models:
-            if not os.path.exists(f"results/results_{model}.csv"):
-                evaluate_model(model)
-                print("=" * 10)
+            evaluate_model(model)
+            print("=" * 10)
         Debug("Evaluation complete")
     elif sys.argv[1] in available_models:
         evaluate_model(sys.argv[1])
