@@ -20,11 +20,13 @@ Benchmarking Enterprise AI
 
 ## Getting Started
 
-These instructions will get you a copy of the [BASIC](www.basicarticlegoeshere.com) benchmarking tool up and running on your local machine for evaluation purposes.
+Follow these instructions to set up the [BASIC benchmarking tool](https://www.enterprisebot.ai/blog/back-to-basics-a-generative-ai-benchmark-for-enterprise) on your local machine to evaluate [LLMs](https://en.wikipedia.org/wiki/Large_language_model) on key metrics like accuracy, contextual understanding, compliance, consistency, and performance.
 
-### Installing
+### Installing the tool
 
-Clone the repository to your local machine. Install the required libraries using the following command:
+Clone the repository to your local machine. 
+
+Install the required libraries using the following command:
 
 ```bash
 pip install -r requirements.txt
@@ -40,20 +42,20 @@ GOOGLE_API_KEY=<your_google_api_key>
 
 ### Running the benchmark
 
-You can run the project using the following command:
+Run the project using the following command:
 
 ```bash
 python basic.py <model>
 ```
 
-You can replace `<model>` with the name of the model you want to evaluate. The available models are:
+Replace `<model>` with the name of the model you want to evaluate. The available models are:
 
 - claude-3-opus-20240229
 - gpt-4-1106-preview
 - gpt-3.5-turbo-0125
 - gpt-4
 
-If you want to evaluate all available models, you can run the project using the following command:
+To evaluate all available models, run the project using the following command:
 
 ```bash
 python basic.py
@@ -63,14 +65,15 @@ python basic.py
 ### Running using custom datasets
 
 You can run the benchmark using your own datasets by adding the dataset to the `dataset` folder. The dataset should 
-be in a `.csv` file with each line containing a ```question```, ```answer``` and ```context``` in that order. You can then 
-run the benchmark with your dataset using the following command:
+be a `.csv` file, with each line containing a `question`, `answer`, and `context`, in that order. 
+
+Run the benchmark with your dataset using the following command:
 
 ```bash
 python basic.py <dataset_name>
 ```
 
-or to run the benchmark with a specific model and dataset:
+To run the benchmark with a specific model and dataset:
 
 ```bash
 python basic.py <model> <dataset_name>
@@ -79,13 +82,13 @@ python basic.py <model> <dataset_name>
 
 ### Adding new models
 
-To add a new model, you can add the model to the `available_models` array in the `basic.py` file. The key should be the model name.
+Add a new model to the `available_models` array in the `basic.py` file. The key should be the model name.
 
 ```python
 available_models = ["claude-3-opus-20240229", "gpt-4-1106-preview", "gpt-3.5-turbo-0125", "gpt-4"]
 ```
 
-You will also need to add the model to the `calculateModelCost` function. The function should return the cost of the model based on the AI providers pricing.
+You also need to add the model to the `calculateModelCost` function. The function should return the cost of the model based on the AI provider's pricing.
 
 ```python
 def calculateModelCost(model, token_usage):
